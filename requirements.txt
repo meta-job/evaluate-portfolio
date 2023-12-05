@@ -3,3 +3,5 @@ uvicorn[standard]
 langchain
 pydantic
 openai
+python-dotenv
+python-multipart
