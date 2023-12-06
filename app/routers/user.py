@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from ..ai_util.ResumeEditor import ResumeEditor
+from ..ai_util.portfolioEditor import PortfolioEditor
 
 router = APIRouter(
     prefix="/{user_id}",
