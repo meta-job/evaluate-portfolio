@@ -19,7 +19,7 @@ class MySQL:
     def get_db_conn(self):
         accountInfo = func_getDBInfo()
         return pymysql.connect( user=accountInfo['user'], 
-                                passwd=accountInfo['password'], 
+                                password=accountInfo['password'], 
                                 host=accountInfo['host'],  
                                 port=int(accountInfo['port']),
                                 db=self.db_name
@@ -28,12 +28,11 @@ class MySQL:
     def insert_table(self, query=""):
         try:
             cursor = self.conn.cursor()
-            cursor.execute(query)
+            result = cursor.execute(query)
             self.conn.commit()
+            return {"message": result}
         except:
             self.conn.rollback()
-
-        return
     
 
     def read_table(self, query = ""):

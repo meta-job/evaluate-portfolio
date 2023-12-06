@@ -5,3 +5,6 @@ pydantic
 openai
 python-dotenv
 python-multipart
+passlib[bcrypt]
+pydantic[email]
+pymysql

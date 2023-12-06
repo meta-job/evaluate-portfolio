@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Form
 from ..ai_util.portfolioEditor import PortfolioEditor
 
 router = APIRouter(
@@ -12,4 +12,4 @@ def get_my_portfolio_list():
 
 @router.get("/{portfolio_id}")
 def get_my_portfolio():
-    pass
+  pass
