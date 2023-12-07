@@ -1,6 +1,7 @@
 import os
 from openai import OpenAI
 from dotenv import load_dotenv
+import fitz
 import time
 import json
 import re
@@ -14,24 +15,40 @@ class PortfolioEditor:
         self.assistant_id = os.getenv('ASSISTANTS_ID')
         self.thread = ""
         self.content = ""
-        self.instructions = f'''
-            너는 한국어로 포트폴리오용 프로젝트 설명을 보충해주는 포르폴리오 작성 도우미야.
-            주어진 설명에 대해서 다음 7가지 기준대로 설명이 있는지 확인해줘.
-            기준대로 있으면 좀 더 보충해서 설명할 걸 넣어주고, 없으면 주어진 이력서를 토대로 넣어줘
-            사람들이 작성한 프로젝트 설명에 다음 질문의 양식과 똑같이 체크해줘
-            # 1. 프로젝트를 왜 했는지?
-            # 2. 프로젝트에 어떠한 기술을 진행했는지?
-            # 3. 기술 선정을 할 때 타당한 이유가 있는지?
-            # 4. 결과가 어떻게 되었는지?
-            # 5. 프로젝트를 진행하면서 기술적인 한계 또는 문제점은 없었는지?'''
+        self.instructions = '''
+            
+            당신은 한국어로 사용자의 Portfolio를 보고 프로젝트 설명을 보충해주는 Portfolio 작성 보조자입니다." 
+            각각의 프로젝트 목록을 분류하고, 프로젝트마다 다음 5가지 기준으로 설명이 되어 있는지 확인해
+            프로젝트가 5가지 기준대로 있더라도 당신이 조금 더 추가적으로 설명을 넣어주고, 추가로 설명해준 내용을 꼭 표시해줘. 
+            다만, 5가지 기준에 없으면 Portfolio를 추가로 설명할 수 있게 작성해주고 추가된 부분을 표시해.
+            다음은 프로젝트 설명이야 0번은 프로젝트 분류.
+            0. 어떠한 프로젝트들을 각각 진행 했는지?
+            그리고 각 프로젝트마다 밑에 질문들을 체크해줘
+            1. 프로젝트를 왜 했는지?
+            2. 프로젝트에 어떠한 기술을 진행했는지?
+            3. 프로젝트의 기술 선정을 할 때, 선정한 기술의 타당한 이유가 있는지?
+            4. 프로젝트 결과가 어떻게 되었는지?
+            5. 프로젝트를 진행하면서 기술적인 한계 또는 문제점은 없었는지?
+            
+            위의 설명은
+            result={
+                project_1:{
+                0:"",1:"", 2:"", 3:"", 4:"", 5:""
+                }
+            }
+            의 형식으로 보여주되,
+            만약 프로젝트가 더 있으면
+            project_number:{
+                0:"",1:"", 2:"", 3:"", 4:"", 5:""
+                }를 추가해서 결과를 보여줘
+            
+            '''
         self.answer  = ""
         self.result={}
 
 
     def __enter__(self):
         self.create_thread()
-        self.analysis_resume()
-        self.create_message()
         self.run_thread()
         self.get_message()
         self.close_thread()
@@ -41,33 +58,63 @@ class PortfolioEditor:
     def __exit__(self, exc_type, exc_val, exc_tb):
         pass
 
-    # def create_assistant(self):
-    #     self.assistant = self.client.beta.assistants.create(
-    #         name="portfolio tutor",
-    #         instructions = self.instructions,
-    #         model="gpt-4-1106-preview",
-    #         tools=[{"type": "retrieval"}]
-    #     )
-
-
-    def create_thread(self):
-        thread = self.client.beta.threads.create()
-        self.thread = thread
-
-    def create_message(self):
-
-        file = self.client.files.create(
-            file=open(self.request["portfolio_file"], "rb"),
-            purpose='assistants'
-            )
-
-        message = self.client.beta.threads.messages.create(
-            thread_id = self.thread.id,
-            role="user",
-            content=self.content,
-            file_ids = [file.id]
+    def create_assistant(self):
+        self.assistant = self.client.beta.assistants.create(
+            name="portfolio tutor",
+            instructions = self.instructions,
+            model="gpt-4-1106-preview",
+            tools=[{"type": "retrieval"}]
         )
 
+    def create_thread(self):
+        self.my_question()
+
+        if self.request["portfolio_file"]:
+            file_to_send = self.client.files.create(
+                file=open(self.request["portfolio_file"], "rb"),
+                purpose="assistants"
+            )
+
+            thread = self.client.beta.threads.create(
+                messages=[
+                    {"role": "user",
+                    "content": self.content,
+                    "file_ids" : [file_to_send.id]
+                    }
+                ]
+            )
+        else:
+            thread = self.client.beta.threads.create(
+                messages=[
+                    {"role": "user",
+                    "content": self.content
+                    }
+                ]
+            )
+        self.thread = thread
+
+    # def create_message(self):
+    #     if self.request["portfolio_file"]:
+    #         file_exist = self.client.files.create(
+    #             file=open(self.request["portfolio_file"], "rb"),
+    #             purpose='assistants'
+    #             )
+                
+    #         if file_exist:
+    #             message = self.client.beta.threads.messages.create(
+    #                 thread_id = self.thread.id,
+    #                 role="user",
+    #                 content=self.content,
+    #                 file_ids = [file_exist.id]
+    #             )
+
+    #     else:
+
+    #         message = self.client.beta.threads.messages.create(
+    #             thread_id = self.thread.id,
+    #             role="user",
+    #             content=self.content
+    #         )
 
     def run_thread(self):
         run = self.client.beta.threads.runs.create(
@@ -94,41 +141,24 @@ class PortfolioEditor:
         self.thread = ""
 
         
-    def analysis_resume(self):
+    def my_question(self):
         self.project_skills = self.request["project_skill"]
-        self.project_description = self.request["project_description"]
+        self.project_description = self.request["project_description"] if self.request["project_description"] else ""
 
         self.content= f'''
-        주어진 설명은 다음과 같아
+        주어진 프로젝트의 설명은 다음과 같아
         사용 기술은 {self.project_skills} 이고,
-        프로젝트 설명은 다음과 같아 {self.project_description}
+        프로젝트 설명은 {self.project_description}. 
         '''
 
     def set_analysis_result(self):
-        answer = json.dumps(str(self.answer))
-        answer = json.loads(answer)
-        pattern = re.compile(r"value='(.*?)'")
-
-        match = pattern.search(answer)
-
+        pattern = re.compile(r"```json(.*?)```", re.DOTALL)
+        match = pattern.search(str(self.answer))
+        
         if match:
-            result = match.group(0)
-            result = json.dumps(result)
-            result = json.loads(result)
-            numbering_pattern = re.compile(r"\\n[0-9].(.*?)\\")
-
-            numbering = numbering_pattern.search(result)
-
-            if numbering:
-                self.result["answer"] = {
-                    "first": numbering.group(0),
-                    "second" : numbering.group(1),
-                    "third": numbering.group(2),
-                    "forth" : numbering.group(3),
-                    "fifth" : numbering.group(4),
-                }
-            else:
-                self.result["answer"] = {"error": "숫자로 나누어지지 않음", "content": result}
-
+            result_text = match.group(1)
+            result_text = result_text.replace("\\n","")
+            result_json = json.loads(result_text)
+            self.result["answer"] = result_json
         else:
-            self.result["answer"] = {"error": "gpt의 답에서 content 가 걸러지지 않음"}
+            self.result["error"] =  str(self.answer)
