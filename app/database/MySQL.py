@@ -1,4 +1,6 @@
 import pymysql
+from pymysql.cursors import DictCursor
+import pandas as pd
 from .getDB import func_getDBInfo
 
 class MySQL:
@@ -31,8 +33,9 @@ class MySQL:
             result = cursor.execute(query)
             self.conn.commit()
             return {"message": result}
-        except:
+        except Exception as e:
             self.conn.rollback()
+            return {"error": str(e)}
     
 
     def read_table(self, query = ""):
@@ -41,16 +44,18 @@ class MySQL:
             cursor = self.conn.cursor()
             cursor.execute(query)
             result = cursor.fetchall()
-        except:
+        except Exception as e:
             self.conn.rollback()
-
+            return {"error": str(e)}
         return result
 
-    def read_dataframe(self, query = ""):
+    def read_data(self, query = ""):
         result = None
         try:
-            result = pd.read_sql(query, self.conn)
-        except:
+            cursor = self.conn.cursor(DictCursor)
+            cursor.execute(query)
+            result = cursor.fetchall()
+        except Exception as e:
             self.conn.rollback()
-
+            return {"error": str(e)}
         return result
