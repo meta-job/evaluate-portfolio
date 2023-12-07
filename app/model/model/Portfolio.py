@@ -21,6 +21,8 @@ class Portfolio():
             self.get_list_portfolio()
         elif self.url == "portfolio":
             self.make_and_insert_portfolio()
+        elif self.url == "my_portfolio":
+            self.get_my_portfolio()
 
         self.result['url'] = self.url
         self.result['msg'] = self.msg
@@ -53,9 +55,19 @@ class Portfolio():
     def get_list_portfolio(self):
         if not self.request["user_id"]:
             self.request['msg'] = "user_id not exists"
-        self.msg = self.request["user_id"]
         query = f'''
             SELECT * FROM metajob.portfolio WHERE user_id = '{self.request["user_id"]}'
         '''
         self.msg = self.mysql.read_table(query=query)
+        self.result["result"] = "success"
+
+    def get_my_portfolio(self):
+        if not self.request["user_id"]:
+            self.request['msg'] = "user_id not exists"
+        if not self.request["portfolio_no"]:
+            self.request['msg'] = "porfolio_no not exists"
+        query = f'''
+            SELECT * FROM metajob.portfolio WHERE user_id = '{self.request["user_id"]}' AND portfolio_no = {self.request["portfolio_no"]}
+        '''
+        self.msg = self.mysql.read_data(query=query)
         self.result["result"] = "success"
