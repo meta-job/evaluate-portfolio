@@ -2,14 +2,10 @@ from fastapi import APIRouter, Form
 from ..ai_util.portfolioEditor import PortfolioEditor
 
 router = APIRouter(
-    prefix="/{user_id}",
-    tags=["portfolio"]
+    prefix="/mypage",
+    tags=["mypage"]
 )
 
-@router.get("/portfolio_list")
-def get_my_portfolio_list():
-  pass
-
-@router.get("/{portfolio_id}")
-def get_my_portfolio():
+@router.get("/{user_id}")
+def mypage():
   pass

@@ -11,3 +11,4 @@ pymysql
 pandas
 python-jose
 bcrypt
+pymupdf
