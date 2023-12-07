@@ -1,5 +1,5 @@
 import uuid
-from ..database.MySQL import MySQL
+from ...database.MySQL import MySQL
 from pydantic import Basemodel
 
 
