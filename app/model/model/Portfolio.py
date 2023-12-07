@@ -2,6 +2,7 @@ from uuid import uuid4
 from ...database.MySQL import MySQL
 from ...ai_util.portfolioEditor import PortfolioEditor
 from fastapi import Depends, HTTPException, status
+from datetime import datetime
 import json
 
 class Portfolio():
@@ -21,6 +22,8 @@ class Portfolio():
             self.get_list_portfolio()
         elif self.url == "portfolio":
             self.make_and_insert_portfolio()
+        elif self.url == "my_portfolio":
+            self.get_my_portfolio()
 
         self.result['url'] = self.url
         self.result['msg'] = self.msg
@@ -37,13 +40,14 @@ class Portfolio():
         else:
             portfolio = json.dumps(portfolio, ensure_ascii=False)
             query = f'''
-                INSERT INTO metajob.portfolio( portfolio_content, portfolio_title, portfolio_use, user_id, portfolio_file_path)
+                INSERT INTO metajob.portfolio( portfolio_content, portfolio_title, portfolio_use, user_id, portfolio_file_path, created_at)
                 VALUES (
                     '{portfolio}',
                     '{self.request["portfolio_title"]}',
                     1,
                     '{self.request["user_id"]}',
-                    '{self.request["portfolio_file"]}'
+                    '{self.request["portfolio_file"]}',
+                    '{datetime.now()}'
                 )
             '''
             self.msg= self.mysql.insert_table(query)
@@ -53,9 +57,17 @@ class Portfolio():
     def get_list_portfolio(self):
         if not self.request["user_id"]:
             self.request['msg'] = "user_id not exists"
-        self.msg = self.request["user_id"]
         query = f'''
             SELECT * FROM metajob.portfolio WHERE user_id = '{self.request["user_id"]}'
         '''
-        self.msg = self.mysql.read_table(query=query)
-        self.result["result"] = "success"
+        self.result["result"] = self.mysql.read_table(query=query)
+
+    def get_my_portfolio(self):
+        if not self.request["user_id"]:
+            self.request['msg'] = "user_id not exists"
+        if not self.request["portfolio_no"]:
+            self.request['msg'] = "porfolio_no not exists"
+        query = f'''
+            SELECT * FROM metajob.portfolio WHERE user_id = '{self.request["user_id"]}' AND portfolio_no = {self.request["portfolio_no"]}
+        ''' 
+        self.result["result"] = self.mysql.read_data(query=query)
