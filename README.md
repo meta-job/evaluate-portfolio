@@ -3,6 +3,8 @@
 
 
 docker build -t resume_feedback .
+
+
 docker run -d -p 8000:8000 -v `pwd`:/usr/src/app --name resume_feedback resume_feedback
 
 
