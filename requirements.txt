@@ -8,3 +8,6 @@ python-multipart
 passlib[bcrypt]
 pydantic[email]
 pymysql
+pandas
+python-jose
+bcrypt

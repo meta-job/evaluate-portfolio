@@ -1,22 +1,28 @@
-from fastapi import FastAPI, Form, HTTPException
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import FastAPI, Form, HTTPException, Depends
+from fastapi.security import OAuth2PasswordRequestForm
 from passlib.context import CryptContext
 from .routers import portfolio
 from .routers import user
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from uuid import uuid4
+import os
+from dotenv import load_dotenv
+
+
 
 import pymysql
-
-from .model.schema.UserSchema import UserSchema
+from .model.schema.UserSchema import UserSchema, UserLogin
 from .model.model.User import User
 
 from .database.MySQL import MySQL
 
 import logging
 
+
+load_dotenv()
 app = FastAPI()
+
 
 app.include_router(portfolio.router)
 app.include_router(user.router)
@@ -24,8 +30,6 @@ app.include_router(user.router)
 @app.get("/")
 def root():
     return {"Hello": "World"}
-
-mysql_instance = MySQL()
 
 @app.post("/signup")
 def signup(
@@ -48,4 +52,8 @@ def signup(
             return user
     except Exception as e:
         return JSONResponse(content={"error": str(e)}, status_code = 500)
-        
+
+@app.post("/signin", response_model = UserLogin)
+def login(form_data: OAuth2PasswordRequestForm = Depends()):
+    with User(request=form_data, url = "signin") as user:
+        return user["token"]

@@ -11,7 +11,7 @@ class UserSchema(BaseModel):
     user_phone: str
     user_use: int = 1
 
-    @validator('user_email', 'user_password', 'user_name', pre=True, always=True)
+    @validator('user_email', 'user_password', pre=True, always=True)
     def empty_check(cls, v):
         if len(v) == 0 or v.strip() == "user_name":
             raise ValueError('empty value is not available')
@@ -26,3 +26,8 @@ class UserSchema(BaseModel):
     @validator('user_id', pre=True, always=True)
     def set_user_id(cls, v):
         return v or str(uuid4())
+
+class UserLogin(BaseModel):
+    access_token: str
+    token_type: str
+    user_email: str
