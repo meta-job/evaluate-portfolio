@@ -69,28 +69,28 @@ class PortfolioEditor:
 
     def create_thread(self):
         self.my_question()
-        if self.request["portfolio_file"]:
-            file_to_send = self.client.files.create(
-                file=open(self.request["portfolio_file"], "rb"),
-                purpose="assistants"
-            )
+        # if self.request["portfolio_file"]:
+        #     file_to_send = self.client.files.create(
+        #         file=open(self.request["portfolio_file"], "rb"),
+        #         purpose="assistants"
+        #     )
 
-            thread = self.client.beta.threads.create(
-                messages=[
-                    {"role": "user",
-                    "content": self.content,
-                    "file_ids" : [file_to_send.id]
-                    }
-                ]
-            )
-        else:
-            thread = self.client.beta.threads.create(
-                messages=[
-                    {"role": "user",
-                    "content": self.content
-                    }
-                ]
-            )
+        #     thread = self.client.beta.threads.create(
+        #         messages=[
+        #             {"role": "user",
+        #             "content": self.content,
+        #             "file_ids" : [file_to_send.id]
+        #             }
+        #         ]
+        #     )
+        # else:
+        thread = self.client.beta.threads.create(
+            messages=[
+                {"role": "user",
+                "content": self.content
+                }
+            ]
+        )
         self.thread = thread
 
     # def create_message(self):
