@@ -69,7 +69,6 @@ class PortfolioEditor:
 
     def create_thread(self):
         self.my_question()
-
         if self.request["portfolio_file"]:
             file_to_send = self.client.files.create(
                 file=open(self.request["portfolio_file"], "rb"),

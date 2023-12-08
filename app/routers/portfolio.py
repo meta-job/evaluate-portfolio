@@ -22,7 +22,7 @@ def analysis_project(user_id: str=Form("user_id"),
     if not os.path.exists(upload_dir):
         os.makedirs(upload_dir)
 
-    if portfolio_file is None:
+    if portfolio_file is not None and portfolio_file.filename is not "":
         file_name = f'{str(uuid4())}.pdf'
         file_path = os.path.join(upload_dir, file_name)
 
@@ -30,10 +30,11 @@ def analysis_project(user_id: str=Form("user_id"),
             f.write(portfolio_file.file.read())
 
     request = {"project_description": project_description,
-               "portfolio_file": file_path,
+               "portfolio_file": file_path if portfolio_file else "",
                "portfolio_title": portfolio_title, 
                "user_id": user_id
                }
+
 
     try:
         with Portfolio(request=request, url="portfolio") as result :
