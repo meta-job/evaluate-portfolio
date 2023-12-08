@@ -21,9 +21,7 @@ class Portfolio():
         if self.url == "portfolio_list":
             self.get_list_portfolio()
         elif self.url == "portfolio":
-            with PortfolioEditor(self.request) as editor:
-                self.result["answer"] = editor
-            # self.make_and_insert_portfolio()
+            self.make_and_insert_portfolio()
         elif self.url == "my_portfolio":
             self.get_my_portfolio()
 
@@ -33,10 +31,10 @@ class Portfolio():
         return self.result
     
     def make_and_insert_portfolio(self):
-        portfolio = ""
         with PortfolioEditor(self.request) as editor:
             portfolio = editor["answer"]
-            
+        description = json.dumps(self.request["project_description"], ensure_ascii=False)
+
         if not portfolio:
             self.result["error"] = "portfolio 미생성"
         else:
@@ -46,16 +44,16 @@ class Portfolio():
                 VALUES (
                     '{portfolio}',
                     '{self.request["portfolio_title"]}',
-                    '{self.request["project_description"]}
+                    '{description}',
                     1,
                     '{self.request["user_id"]}',
-                    '{self.request["portfolio_file"]}',
+                    '',
                     '{datetime.now()}'
                 )
             '''
             self.msg= self.mysql.insert_table(query)
 
-        self.result["result"] = portfolio
+        self.result["result"] = query
         
     def get_list_portfolio(self):
         if not self.request["user_id"]:
