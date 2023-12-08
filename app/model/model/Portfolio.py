@@ -33,7 +33,6 @@ class Portfolio():
     def make_and_insert_portfolio(self):
         with PortfolioEditor(self.request) as editor:
             portfolio = editor["answer"]
-        portfolio ="레코드 생성 확인"
         description = json.dumps(self.request["project_description"], ensure_ascii=False)
 
         if not portfolio:
