@@ -21,7 +21,9 @@ class Portfolio():
         if self.url == "portfolio_list":
             self.get_list_portfolio()
         elif self.url == "portfolio":
-            self.make_and_insert_portfolio()
+            with PortfolioEditor(self.request) as editor:
+                self.result["answer"] = editor
+            # self.make_and_insert_portfolio()
         elif self.url == "my_portfolio":
             self.get_my_portfolio()
 
@@ -40,10 +42,11 @@ class Portfolio():
         else:
             portfolio = json.dumps(portfolio, ensure_ascii=False)
             query = f'''
-                INSERT INTO metajob.portfolio( portfolio_content, portfolio_title, portfolio_use, user_id, portfolio_file_path, created_at)
+                INSERT INTO metajob.portfolio( portfolio_content, portfolio_title, portfolio_description, portfolio_use, user_id, portfolio_file_path, created_at)
                 VALUES (
                     '{portfolio}',
                     '{self.request["portfolio_title"]}',
+                    '{self.request["project_description"]}
                     1,
                     '{self.request["user_id"]}',
                     '{self.request["portfolio_file"]}',
