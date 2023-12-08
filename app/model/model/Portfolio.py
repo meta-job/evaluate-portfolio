@@ -53,7 +53,7 @@ class Portfolio():
             '''
             self.msg= self.mysql.insert_table(query)
 
-        self.result["result"] = query
+        self.result["result"] = portfolio
         
     def get_list_portfolio(self):
         if not self.request["user_id"]:
