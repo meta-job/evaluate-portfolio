@@ -49,7 +49,7 @@ class Portfolio():
                     '{self.request["project_description"]}
                     1,
                     '{self.request["user_id"]}',
-                    '{self.request["portfolio_file"]}',
+                    '',
                     '{datetime.now()}'
                 )
             '''
