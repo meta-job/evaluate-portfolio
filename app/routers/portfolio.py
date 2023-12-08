@@ -22,7 +22,7 @@ def analysis_project(user_id: str=Form("user_id"),
     if not os.path.exists(upload_dir):
         os.makedirs(upload_dir)
 
-    if portfolio_file:
+    if portfolio_file is None:
         file_name = f'{str(uuid4())}.pdf'
         file_path = os.path.join(upload_dir, file_name)
 
