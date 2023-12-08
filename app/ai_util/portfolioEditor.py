@@ -5,6 +5,7 @@ import fitz
 import time
 import json
 import re
+import ast
 
 load_dotenv()
 
@@ -142,14 +143,14 @@ class PortfolioEditor:
 
         
     def my_question(self):
-        self.project_skills = self.request["project_skill"]
         self.project_description = self.request["project_description"] if self.request["project_description"] else ""
 
-        self.content= f'''
-        주어진 프로젝트의 설명은 다음과 같아
-        사용 기술은 {self.project_skills} 이고,
-        프로젝트 설명은 {self.project_description}. 
-        '''
+        self.content= ""
+
+        list_of_project =ast.literal_eval(self.project_description)
+        for i in range(len(list_of_project)):
+            self.content += f"주어진 프로젝트 {i+1} 번째: 사용 스킬은 {list_of_project[i][0]}, 설명은 '{list_of_project[i][1]}' 입니다."
+
 
     def set_analysis_result(self):
         pattern = re.compile(r"```json(.*?)```", re.DOTALL)
