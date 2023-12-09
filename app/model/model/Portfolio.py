@@ -31,29 +31,33 @@ class Portfolio():
         return self.result
     
     def make_and_insert_portfolio(self):
+        portfolio = {}
+        
         with PortfolioEditor(self.request) as editor:
-            portfolio = editor["answer"]
-        description = json.dumps(self.request["project_description"], ensure_ascii=False)
+            portfolio = editor
+        
+        portfolio_content = portfolio["answer"] if not portfolio["error"] else portfolio["error"]["code"]
+        portfolio_content_str = json.dumps(portfolio_content, ensure_ascii=False)
+        portfolio_file_id = portfolio["portfolio_file_id"]
 
         if not portfolio:
             self.result["error"] = "portfolio 미생성"
         else:
-            portfolio = json.dumps(portfolio, ensure_ascii=False)
             query = f'''
-                INSERT INTO metajob.portfolio( portfolio_content, portfolio_title, portfolio_description, portfolio_use, user_id, portfolio_file_path, created_at)
+                INSERT INTO metajob.portfolio( portfolio_content, portfolio_title, portfolio_description, portfolio_use, user_id, portfolio_file_id, created_at)
                 VALUES (
-                    '{portfolio}',
+                    '{portfolio_content_str}',
                     '{self.request["portfolio_title"]}',
-                    '{description}',
+                    '{self.request["project_description"]}',
                     1,
                     '{self.request["user_id"]}',
-                    '',
+                    '{portfolio_file_id}',
                     '{datetime.now()}'
                 )
             '''
             self.msg= self.mysql.insert_table(query)
 
-        self.result["result"] = portfolio
+        self.result["result"] = {"success" : portfolio}
         
     def get_list_portfolio(self):
         if not self.request["user_id"]:

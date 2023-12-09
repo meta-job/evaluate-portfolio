@@ -69,64 +69,45 @@ class PortfolioEditor:
 
     def create_thread(self):
         self.my_question()
-        # if self.request["portfolio_file"]:
-        #     file_to_send = self.client.files.create(
-        #         file=open(self.request["portfolio_file"], "rb"),
-        #         purpose="assistants"
-        #     )
+        if self.request["portfolio_file"]:
+            file_to_send = self.client.files.create(
+                file=open(self.request["portfolio_file"], "rb"),
+                purpose="assistants"
+            )
 
-        #     thread = self.client.beta.threads.create(
-        #         messages=[
-        #             {"role": "user",
-        #             "content": self.content,
-        #             "file_ids" : [file_to_send.id]
-        #             }
-        #         ]
-        #     )
-        # else:
-        thread = self.client.beta.threads.create(
-            messages=[
-                {"role": "user",
-                "content": self.content
-                }
-            ]
-        )
+
+            thread = self.client.beta.threads.create(
+                messages=[
+                    {"role": "user",
+                    "content": self.content,
+                    "file_ids" : [file_to_send.id]
+                    }
+                ]
+            )
+            self.result["portfolio_file_id"] = file_to_send.id
+
+        else:
+            thread = self.client.beta.threads.create(
+                messages=[
+                    {"role": "user",
+                    "content": self.content
+                    }
+                ]
+            )
+            self.result["portfolio_file_id"] = ""
         self.thread = thread
-
-    # def create_message(self):
-    #     if self.request["portfolio_file"]:
-    #         file_exist = self.client.files.create(
-    #             file=open(self.request["portfolio_file"], "rb"),
-    #             purpose='assistants'
-    #             )
-                
-    #         if file_exist:
-    #             message = self.client.beta.threads.messages.create(
-    #                 thread_id = self.thread.id,
-    #                 role="user",
-    #                 content=self.content,
-    #                 file_ids = [file_exist.id]
-    #             )
-
-    #     else:
-
-    #         message = self.client.beta.threads.messages.create(
-    #             thread_id = self.thread.id,
-    #             role="user",
-    #             content=self.content
-    #         )
 
     def run_thread(self):
         run = self.client.beta.threads.runs.create(
             thread_id = self.thread.id,
             assistant_id = self.assistant_id
         )
-        while run.status != "completed":
-            time.sleep(1)
-            run = self.client.beta.threads.runs.retrieve(
-                thread_id=self.thread.id,
-                run_id=run.id
-            )
+        # while run.status != "completed":
+        #     time.sleep(1)
+        #     run = self.client.beta.threads.runs.retrieve(
+        #         thread_id=self.thread.id,
+        #         run_id=run.id
+        #     )
 
     def get_message(self):
         self.answer = self.client.beta.threads.messages.list(
@@ -143,22 +124,21 @@ class PortfolioEditor:
         
     def my_question(self):
         self.project_description = self.request["project_description"] if self.request["project_description"] else ""
-
         self.content= ""
-
         list_of_project =ast.literal_eval(self.project_description)
+        
         for i in range(len(list_of_project)):
             self.content += f"주어진 프로젝트 {i+1} 번째: 사용 스킬은 {list_of_project[i][0]}, 설명은 '{list_of_project[i][1]}' 입니다."
-
 
     def set_analysis_result(self):
         pattern = re.compile(r"```json(.*?)```", re.DOTALL)
         match = pattern.search(str(self.answer))
-        
+
         if match:
             result_text = match.group(1)
             result_text = result_text.replace("\\n","")
             result_json = json.loads(result_text)
+            self.result["proto"] = match
             self.result["answer"] = result_json
         else:
-            self.result["error"] =  str(self.answer)
+            self.result["error"] =  {"code": 500}
