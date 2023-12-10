@@ -69,32 +69,32 @@ class PortfolioEditor:
 
     def create_thread(self):
         self.my_question()
-        if self.request["portfolio_file"]:
-            file_to_send = self.client.files.create(
-                file=open(self.request["portfolio_file"], "rb"),
-                purpose="assistants"
-            )
+        # if self.request["portfolio_file"]:
+        #     file_to_send = self.client.files.create(
+        #         file=open(self.request["portfolio_file"], "rb"),
+        #         purpose="assistants"
+        #     )
 
 
-            thread = self.client.beta.threads.create(
-                messages=[
-                    {"role": "user",
-                    "content": self.content,
-                    "file_ids" : [file_to_send.id]
-                    }
-                ]
-            )
-            self.result["portfolio_file_id"] = file_to_send.id
+        #     thread = self.client.beta.threads.create(
+        #         messages=[
+        #             {"role": "user",
+        #             "content": self.content,
+        #             "file_ids" : [file_to_send.id]
+        #             }
+        #         ]
+        #     )
+        #     self.result["portfolio_file_id"] = file_to_send.id
 
-        else:
-            thread = self.client.beta.threads.create(
-                messages=[
-                    {"role": "user",
-                    "content": self.content
-                    }
-                ]
-            )
-            self.result["portfolio_file_id"] = ""
+        # else:
+        thread = self.client.beta.threads.create(
+            messages=[
+                {"role": "user",
+                "content": self.content
+                }
+            ]
+        )
+        self.result["portfolio_file_id"] = ""
         self.thread = thread
 
     def run_thread(self):
@@ -102,12 +102,14 @@ class PortfolioEditor:
             thread_id = self.thread.id,
             assistant_id = self.assistant_id
         )
-        # while run.status != "completed":
-        #     time.sleep(1)
-        #     run = self.client.beta.threads.runs.retrieve(
-        #         thread_id=self.thread.id,
-        #         run_id=run.id
-        #     )
+        while run.status != "completed":
+            if run.status in ["cancelling", "cancelled", "failed"]:
+                return
+            time.sleep(1)
+            run = self.client.beta.threads.runs.retrieve(
+                thread_id=self.thread.id,
+                run_id=run.id
+            )
 
     def get_message(self):
         self.answer = self.client.beta.threads.messages.list(
@@ -124,21 +126,40 @@ class PortfolioEditor:
         
     def my_question(self):
         self.project_description = self.request["project_description"] if self.request["project_description"] else ""
-        self.content= ""
-        list_of_project =ast.literal_eval(self.project_description)
-        
-        for i in range(len(list_of_project)):
-            self.content += f"주어진 프로젝트 {i+1} 번째: 사용 스킬은 {list_of_project[i][0]}, 설명은 '{list_of_project[i][1]}' 입니다."
+        list_of_project = self.project_description
+
+        if type(self.project_description) == "str":
+            list_of_project = ast.literal_eval()
+            for i in range(len(list_of_project)):
+                self.content += f"주어진 프로젝트 {i+1} 번째: 사용 스킬은 {list_of_project[i][0]}, 설명은 '{list_of_project[i][1]}' 입니다."
+
+        elif len(list_of_project) > 0:
+            for i in range(len(list_of_project)):
+                self.content += f"주어진 프로젝트 {i+1} 번째: 사용 스킬은 {list_of_project[i][0]}, 설명은 '{list_of_project[i][1]}' 입니다."
+
+
 
     def set_analysis_result(self):
-        pattern = re.compile(r"```json(.*?)```", re.DOTALL)
-        match = pattern.search(str(self.answer))
+        # pattern = re.compile(r'"project_[0-9]+":\s*{([^}]+)}', re.DOTALL)
+        # matches = pattern.findall(str(self.answer))
+        # self.result["answer"] = {"match": matches}
+        result = self.answer.data[0].content[0].text.value
 
-        if match:
-            result_text = match.group(1)
-            result_text = result_text.replace("\\n","")
-            result_json = json.loads(result_text)
-            self.result["proto"] = match
-            self.result["answer"] = result_json
+        pattern_json = re.compile(r'```json(.*?)```', re.DOTALL)
+        pattern_result = re.compile(r'result\s*=\s*({.*?})', re.DOTALL)
+        pattern_project = re.compile(r'"project_[0-9]+":\s*{([^}]+)}', re.DOTALL)
+
+        json_match = re.search(pattern_json, result)
+        result_match = re.search(pattern_result, result)
+        project_match = re.search(pattern_project, result)
+
+        if result.startswith("result"):
+            self.result["answer"] = result
+        elif json_match:
+            self.result["answer"] = json_match.group() if json_match else None
+        elif result_match:
+            self.result["answer"] = result_match.group() if result_match else None
+        elif project_match:
+            self.result["answer"] = project_match.group() if project_match else None
         else:
-            self.result["error"] =  {"code": 500}
+            self.result["answer"] = result

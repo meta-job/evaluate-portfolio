@@ -2,7 +2,6 @@ from uuid import uuid4
 from ...database.MySQL import MySQL
 from ...ai_util.portfolioEditor import PortfolioEditor
 from fastapi import Depends, HTTPException, status
-from datetime import datetime
 import json
 
 class Portfolio():
@@ -36,9 +35,12 @@ class Portfolio():
         with PortfolioEditor(self.request) as editor:
             portfolio = editor
         
-        portfolio_content = portfolio["answer"] if not portfolio["error"] else portfolio["error"]["code"]
+        portfolio_content = portfolio["answer"]
+
         portfolio_content_str = json.dumps(portfolio_content, ensure_ascii=False)
-        portfolio_file_id = portfolio["portfolio_file_id"]
+        portfolio_description = json.dumps(self.request["project_description"], ensure_ascii=False).replace("'", r"\'")
+
+        portfolio_file_id = " "
 
         if not portfolio:
             self.result["error"] = "portfolio 미생성"
@@ -48,16 +50,17 @@ class Portfolio():
                 VALUES (
                     '{portfolio_content_str}',
                     '{self.request["portfolio_title"]}',
-                    '{self.request["project_description"]}',
+                    '{portfolio_description}',
                     1,
                     '{self.request["user_id"]}',
                     '{portfolio_file_id}',
-                    '{datetime.now()}'
+                    DATE(NOW())
                 )
             '''
             self.msg= self.mysql.insert_table(query)
 
         self.result["result"] = {"success" : portfolio}
+        self.result["query"] = query
         
     def get_list_portfolio(self):
         if not self.request["user_id"]:
