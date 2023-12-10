@@ -32,7 +32,6 @@ def analysis_project(user_id: str=Form("user_id"),
                 f.write(portfolio_file.file.read())
 
     request = {"project_description": project_description,
-               "portfolio_file": file_path if portfolio_file else "",
                "portfolio_title": portfolio_title, 
                "portfolio_file": file_path,
                "user_id": user_id
