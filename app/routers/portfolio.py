@@ -10,7 +10,7 @@ router = APIRouter(
     tags=["portfolio"]
 )
 
-@router.get("/result")
+@router.post("/result")
 def analysis_project(user_id: str=Form("user_id"),
                      portfolio_title: str=Form("portfolio_title"),
                      project_description: str=Form("project_description"),
