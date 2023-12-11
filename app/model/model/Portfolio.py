@@ -3,7 +3,7 @@ from ...database.MySQL import MySQL
 from ...ai_util.portfolioEditor import PortfolioEditor
 from fastapi import Depends, HTTPException, status
 import json
-
+import ast
 class Portfolio():
     def __init__(self, request, url=None) -> None:
         self.request = request
@@ -34,10 +34,20 @@ class Portfolio():
         
         with PortfolioEditor(self.request) as editor:
             portfolio = editor
-        
+
         portfolio_content = portfolio["answer"]
 
-        portfolio_content_str = json.dumps(portfolio_content, ensure_ascii=False)
+        json_portfolio_content = {}
+        for i in range(0, len(portfolio_content)):
+            key = portfolio_content[i][0]
+            json_content = portfolio_content[i][1].replace("\n", "")
+            json_content = '{' + json_content.strip('\'') + '}'
+            json_content = json.dumps(json_content)
+            parsed_json = json.loads(json_content)
+            json_portfolio_content[key] = ast.literal_eval(parsed_json)
+
+        json_portfolio_content_result = json.dumps(json_portfolio_content, indent=2, ensure_ascii=False)
+
         portfolio_description = json.dumps(self.request["project_description"], ensure_ascii=False).replace("'", r"\'")
 
         portfolio_file_id = " "
@@ -48,7 +58,7 @@ class Portfolio():
             query = f'''
                 INSERT INTO metajob.portfolio( portfolio_content, portfolio_title, portfolio_description, portfolio_use, user_id, portfolio_file_id, created_at)
                 VALUES (
-                    '{portfolio_content_str}',
+                    '{json_portfolio_content_result}',
                     '{self.request["portfolio_title"]}',
                     '{portfolio_description}',
                     1,
@@ -59,8 +69,7 @@ class Portfolio():
             '''
             self.msg= self.mysql.insert_table(query)
 
-        self.result["result"] = {"success" : portfolio}
-        self.result["query"] = query
+        self.result["result"] = {"title": self.request["portfolio_title"] ,"content": json_portfolio_content_result}
         
     def get_list_portfolio(self):
         if not self.request["user_id"]:

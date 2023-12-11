@@ -127,17 +127,18 @@ class PortfolioEditor:
     def my_question(self):
         self.project_description = self.request["project_description"] if self.request["project_description"] else ""
         list_of_project = self.project_description
-
-        if type(self.project_description) == "str":
-            list_of_project = ast.literal_eval()
+        
+        if type(list_of_project) == "str":
+            list_of_project = [list_of_project[i:i + 3] for i in range(0, len(list_of_project), 3)]
             for i in range(len(list_of_project)):
-                self.content += f"주어진 프로젝트 {i+1} 번째: 사용 스킬은 {list_of_project[i][0]}, 설명은 '{list_of_project[i][1]}' 입니다."
+                self.content += f"주어진 프로젝트 {i+1} 번째: 사용 스킬은 {list_of_project[i][1]}, 설명은 '{list_of_project[i][2]}' 입니다."
 
         elif len(list_of_project) > 0:
+
+            list_of_project = [list_of_project[i:i + 3] for i in range(0, len(list_of_project), 3)]
             for i in range(len(list_of_project)):
-                self.content += f"주어진 프로젝트 {i+1} 번째: 사용 스킬은 {list_of_project[i][0]}, 설명은 '{list_of_project[i][1]}' 입니다."
-
-
+                self.content += f"주어진 프로젝트 {i+1} 번째: 사용 스킬은 {list_of_project[i][1]}, 설명은 '{list_of_project[i][2]}' 입니다."
+ 
 
     def set_analysis_result(self):
         # pattern = re.compile(r'"project_[0-9]+":\s*{([^}]+)}', re.DOTALL)
@@ -147,19 +148,21 @@ class PortfolioEditor:
 
         pattern_json = re.compile(r'```json(.*?)```', re.DOTALL)
         pattern_result = re.compile(r'result\s*=\s*({.*?})', re.DOTALL)
-        pattern_project = re.compile(r'"project_[0-9]+":\s*{([^}]+)}', re.DOTALL)
+        pattern_project = re.compile(r'"(project_[0-9]+)":\s*{([^}]+)}', re.DOTALL)
+
 
         json_match = re.search(pattern_json, result)
         result_match = re.search(pattern_result, result)
-        project_match = re.search(pattern_project, result)
+        project_match =  pattern_project.findall(result)
+        self.result["answer"] = project_match
 
-        if result.startswith("result"):
-            self.result["answer"] = result
-        elif json_match:
-            self.result["answer"] = json_match.group() if json_match else None
-        elif result_match:
-            self.result["answer"] = result_match.group() if result_match else None
-        elif project_match:
-            self.result["answer"] = project_match.group() if project_match else None
-        else:
-            self.result["answer"] = result
+        # if result.startswith("result"):
+        #     self.result["answer"] = result
+        # elif json_match:
+        #     self.result["answer"] = json_match.group() if json_match else None
+        # elif result_match:
+        #     self.result["answer"] = result_match.group() if result_match else None
+        # if project_match:
+        #     self.result["answer"] = project_match.groups() if project_match else None
+        # else:
+        #     self.result["answer"] = result

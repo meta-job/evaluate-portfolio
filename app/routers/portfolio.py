@@ -3,8 +3,8 @@ from ..model.model.Portfolio import Portfolio
 from fastapi.encoders import jsonable_encoder
 from starlette.background import BackgroundTask
 from pydantic import BaseModel
-from typing import List
-
+from typing import List, Dict
+import json
 import os
 from uuid import uuid4
 
@@ -12,6 +12,7 @@ router = APIRouter(
     prefix="/portfolios",
     tags=["portfolio"]
 )
+
 
 @router.post("/result")
 def analysis_project(user_id: str = Form(...), portfolio_title: str=Form(...), project_description: list=Form(...)):
